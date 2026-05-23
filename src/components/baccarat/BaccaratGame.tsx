@@ -1,6 +1,6 @@
 'use client';
 
-import { useReducer, useCallback, useEffect, useState } from 'react';
+import { useReducer, useCallback, useEffect, useRef, useState } from 'react';
 import { useAccount, useConnect, useDisconnect, useSendTransaction, useWaitForTransactionReceipt, useSwitchChain } from 'wagmi';
 import { base } from 'wagmi/chains';
 import { useFarcasterMiniApp } from '@/lib/farcaster';
@@ -59,29 +59,54 @@ export function BaccaratGame() {
     dispatch({ type: 'SET_BET_AMOUNT', amount });
   }, []);
 
-  const sendScore = useCallback(async (chips: number, handsPlayed: number, wins: number) => {
-    if (!isConnected || !isContractConfigured) return;
+  const scoreSentRef = useRef(false);
+  const gameoverSnapshotRef = useRef<{ chips: number; handsPlayed: number; wins: number } | null>(null);
+
+  const sendScore = useCallback(async (chips: number, handsPlayed: number, wins: number): Promise<boolean> => {
+    if (!isConnected || !isContractConfigured) return false;
     if (!isOnBase) {
       try {
         const switched = await switchChainAsync({ chainId: base.id });
-        if (switched.id !== base.id) return;
+        if (switched.id !== base.id) return false;
       } catch {
-        return;
+        return false;
       }
     }
     const tx = encodeRecordScore(BigInt(chips), BigInt(handsPlayed), BigInt(wins));
     sendTransaction(tx);
+    return true;
   }, [isConnected, isOnBase, switchChainAsync, sendTransaction]);
+
+  // Effect 1: snapshot gameover values once; reset on new game
+  useEffect(() => {
+    if (state.phase === 'gameover' && gameoverSnapshotRef.current === null) {
+      gameoverSnapshotRef.current = { chips: state.chips, handsPlayed: state.handsPlayed, wins: state.wins };
+    }
+    if (state.phase === 'betting') {
+      gameoverSnapshotRef.current = null;
+      scoreSentRef.current = false;
+    }
+  }, [state.phase, state.chips, state.handsPlayed, state.wins]);
+
+  // Effect 2: send once snapshot is ready; defers if wallet not yet connected
+  useEffect(() => {
+    if (state.phase === 'gameover' && !scoreSentRef.current && gameoverSnapshotRef.current) {
+      if (!isConnected || !isContractConfigured) return;
+      scoreSentRef.current = true;
+      const { chips, handsPlayed, wins } = gameoverSnapshotRef.current;
+      sendScore(chips, handsPlayed, wins).then(sent => {
+        if (!sent) scoreSentRef.current = false;
+      });
+    }
+  }, [state.phase, sendScore, isConnected]);
 
   const handleRecordScore = useCallback(() => {
     sendScore(state.chips, state.handsPlayed, state.wins);
   }, [sendScore, state.chips, state.handsPlayed, state.wins]);
 
   const handleCashOut = useCallback(() => {
-    const { chips, handsPlayed, wins } = state;
     dispatch({ type: 'CASHOUT' });
-    sendScore(chips, handsPlayed, wins);
-  }, [state, sendScore]);
+  }, [dispatch]);
 
   const connectorName = (id: string) => {
     if (id === 'injected') return isInMiniApp ? 'Farcaster Wallet' : 'Browser Wallet';
@@ -229,7 +254,6 @@ export function BaccaratGame() {
           onNext={() => dispatch({ type: 'NEXT_HAND' })}
           onCashOut={handleCashOut}
           betChips={BET_CHIPS}
-          isSendingTx={isSending || isConfirming}
         />
       )}
     </div>
@@ -337,7 +361,6 @@ function ControlPanel({
   onNext,
   onCashOut,
   betChips,
-  isSendingTx,
 }: {
   state: ReturnType<typeof createInitialState>;
   onBet: (b: BetType) => void;
@@ -347,7 +370,6 @@ function ControlPanel({
   onNext: () => void;
   onCashOut: () => void;
   betChips: number[];
-  isSendingTx: boolean;
 }) {
   const isBetting = state.phase === 'betting';
   const isPlaying = state.phase === 'playing';
@@ -515,20 +537,19 @@ function ControlPanel({
           </button>
           <button
             onClick={onCashOut}
-            disabled={isSendingTx}
             style={{
               flex: 1,
               padding: '14px',
               backgroundColor: 'transparent',
-              color: isSendingTx ? '#99998877' : 'var(--mid)',
+              color: 'var(--mid)',
               border: '1px solid #33333355',
               fontFamily: 'inherit',
               fontSize: 11,
               fontWeight: 700,
-              cursor: isSendingTx ? 'default' : 'pointer',
+              cursor: 'pointer',
             }}
           >
-            {isSendingTx ? '送信中...' : 'CASH OUT'}
+            CASH OUT
           </button>
         </div>
       )}
