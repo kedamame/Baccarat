@@ -5,9 +5,9 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://your-app.vercel.app'
 export async function GET() {
   return NextResponse.json({
     accountAssociation: {
-      header: 'REPLACE_WITH_WARPCAST_MANIFEST_TOOL_OUTPUT',
-      payload: 'REPLACE_WITH_WARPCAST_MANIFEST_TOOL_OUTPUT',
-      signature: 'REPLACE_WITH_WARPCAST_MANIFEST_TOOL_OUTPUT',
+      header: 'eyJmaWQiOjIxMTE4OSwidHlwZSI6ImN1c3RvZHkiLCJrZXkiOiIweEFBZTM5NEQ1MWUyYzBhOTczNWUwQmI2NzdFMTJmMjE1MjVCRWI1NTIifQ',
+      payload: 'eyJkb21haW4iOiJiYWNjYXJhdC1maXZlLnZlcmNlbC5hcHAifQ',
+      signature: 'HR4Y/ftOvYQpe7BHZuj2sy1K1E5Hi7UaY4c8dH6qDWlPe1bt8YC2bEFdQMWJBMjhkXZGVETKAiUKo8/CWsmQBBw=',
     },
     miniapp: {
       version: '1',
