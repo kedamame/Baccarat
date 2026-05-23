@@ -59,8 +59,8 @@ export function BaccaratGame() {
     dispatch({ type: 'SET_BET_AMOUNT', amount });
   }, []);
 
-  const handleRecordScore = useCallback(async () => {
-    if (!isConnected) return;
+  const sendScore = useCallback(async (chips: number, handsPlayed: number, wins: number) => {
+    if (!isConnected || !isContractConfigured) return;
     if (!isOnBase) {
       try {
         const switched = await switchChainAsync({ chainId: base.id });
@@ -69,13 +69,19 @@ export function BaccaratGame() {
         return;
       }
     }
-    const tx = encodeRecordScore(
-      BigInt(state.chips),
-      BigInt(state.handsPlayed),
-      BigInt(state.wins),
-    );
+    const tx = encodeRecordScore(BigInt(chips), BigInt(handsPlayed), BigInt(wins));
     sendTransaction(tx);
-  }, [isConnected, isOnBase, switchChainAsync, sendTransaction, state.chips, state.handsPlayed, state.wins]);
+  }, [isConnected, isOnBase, switchChainAsync, sendTransaction]);
+
+  const handleRecordScore = useCallback(() => {
+    sendScore(state.chips, state.handsPlayed, state.wins);
+  }, [sendScore, state.chips, state.handsPlayed, state.wins]);
+
+  const handleCashOut = useCallback(() => {
+    const { chips, handsPlayed, wins } = state;
+    dispatch({ type: 'CASHOUT' });
+    sendScore(chips, handsPlayed, wins);
+  }, [state, sendScore]);
 
   const connectorName = (id: string) => {
     if (id === 'injected') return isInMiniApp ? 'Farcaster Wallet' : 'Browser Wallet';
@@ -221,8 +227,9 @@ export function BaccaratGame() {
           onSetBet={handleSetBet}
           onDeal={handleDeal}
           onNext={() => dispatch({ type: 'NEXT_HAND' })}
-          onCashOut={() => dispatch({ type: 'CASHOUT' })}
+          onCashOut={handleCashOut}
           betChips={BET_CHIPS}
+          isSendingTx={isSending || isConfirming}
         />
       )}
     </div>
@@ -330,6 +337,7 @@ function ControlPanel({
   onNext,
   onCashOut,
   betChips,
+  isSendingTx,
 }: {
   state: ReturnType<typeof createInitialState>;
   onBet: (b: BetType) => void;
@@ -339,6 +347,7 @@ function ControlPanel({
   onNext: () => void;
   onCashOut: () => void;
   betChips: number[];
+  isSendingTx: boolean;
 }) {
   const isBetting = state.phase === 'betting';
   const isPlaying = state.phase === 'playing';
@@ -395,22 +404,41 @@ function ControlPanel({
             ))}
           </div>
 
-          {/* Clear bet */}
-          <button
-            onClick={() => onSetBet(10)}
-            style={{
-              background: 'none',
-              border: 'none',
-              fontFamily: 'inherit',
-              fontSize: 10,
-              color: 'var(--mid)',
-              cursor: 'pointer',
-              textAlign: 'left',
-              letterSpacing: 0.5,
-            }}
-          >
-            RESET BET / クリア
-          </button>
+          {/* Clear / All In */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <button
+              onClick={() => onSetBet(10)}
+              style={{
+                background: 'none',
+                border: 'none',
+                fontFamily: 'inherit',
+                fontSize: 10,
+                color: 'var(--mid)',
+                cursor: 'pointer',
+                letterSpacing: 0.5,
+                padding: 0,
+              }}
+            >
+              RESET BET / クリア
+            </button>
+            <button
+              onClick={() => onSetBet(state.chips)}
+              disabled={state.chips <= (state.betAmount)}
+              style={{
+                background: 'none',
+                border: '1px solid var(--border)',
+                fontFamily: 'inherit',
+                fontSize: 10,
+                fontWeight: 700,
+                color: state.chips > state.betAmount ? 'var(--fg)' : 'var(--mid)',
+                cursor: state.chips > state.betAmount ? 'pointer' : 'default',
+                letterSpacing: 1,
+                padding: '4px 10px',
+              }}
+            >
+              ALL IN / 全額
+            </button>
+          </div>
 
           {/* Bet type buttons */}
           <div style={{ display: 'flex', gap: 6 }}>
@@ -487,19 +515,20 @@ function ControlPanel({
           </button>
           <button
             onClick={onCashOut}
+            disabled={isSendingTx}
             style={{
               flex: 1,
               padding: '14px',
               backgroundColor: 'transparent',
-              color: 'var(--mid)',
+              color: isSendingTx ? '#99998877' : 'var(--mid)',
               border: '1px solid #33333355',
               fontFamily: 'inherit',
               fontSize: 11,
               fontWeight: 700,
-              cursor: 'pointer',
+              cursor: isSendingTx ? 'default' : 'pointer',
             }}
           >
-            CASH OUT
+            {isSendingTx ? '送信中...' : 'CASH OUT'}
           </button>
         </div>
       )}
