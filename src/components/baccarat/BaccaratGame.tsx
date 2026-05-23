@@ -155,40 +155,52 @@ export function BaccaratGame() {
       </header>
 
       {/* Wallet bar */}
-      <div
-        style={{
-          padding: '8px 20px',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          fontSize: 10,
-          borderBottom: '1px solid #33333322',
-        }}
-      >
-        {isConnected ? (
-          <>
-            <span style={{ color: 'var(--mid)' }}>{shortAddr}</span>
-            <button
-              onClick={() => disconnect()}
-              style={{ background: 'none', border: 'none', color: 'var(--mid)', cursor: 'pointer', fontSize: 10, fontFamily: 'inherit' }}
-            >
-              DISCONNECT
-            </button>
-          </>
-        ) : (
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+      {isConnected ? (
+        <div
+          style={{
+            padding: '8px 20px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            fontSize: 10,
+            borderBottom: '1px solid #33333322',
+          }}
+        >
+          <span style={{ color: 'var(--mid)' }}>{shortAddr}</span>
+          <button
+            onClick={() => disconnect()}
+            style={{ background: 'none', border: 'none', color: 'var(--mid)', cursor: 'pointer', fontSize: 10, fontFamily: 'inherit' }}
+          >
+            DISCONNECT
+          </button>
+        </div>
+      ) : (
+        <div
+          style={{
+            padding: '12px 20px',
+            borderBottom: '1px solid #33333322',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 8,
+          }}
+        >
+          <div style={{ fontSize: 10, color: 'var(--mid)', letterSpacing: 0.5 }}>
+            CONNECT WALLET / ウォレットを接続してスコアを記録
+          </div>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             {connectors.map((c) => (
               <button
                 key={c.id}
                 onClick={() => connect({ connector: c })}
                 style={{
-                  background: 'none',
-                  border: '1px solid var(--border)',
-                  color: 'var(--fg)',
+                  backgroundColor: 'var(--fg)',
+                  color: 'var(--bg)',
+                  border: 'none',
                   cursor: 'pointer',
-                  fontSize: 10,
+                  fontSize: 11,
+                  fontWeight: 700,
                   fontFamily: 'inherit',
-                  padding: '3px 8px',
+                  padding: '8px 14px',
                   letterSpacing: 0.5,
                 }}
               >
@@ -196,8 +208,8 @@ export function BaccaratGame() {
               </button>
             ))}
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Game area */}
       <div style={{ flex: 1, padding: '20px 20px 0', display: 'flex', flexDirection: 'column', gap: 16 }}>
