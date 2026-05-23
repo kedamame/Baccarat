@@ -1,0 +1,32 @@
+{
+  "accountAssociation": {
+    "header": "REPLACE_WITH_WARPCAST_MANIFEST_TOOL_OUTPUT",
+    "payload": "REPLACE_WITH_WARPCAST_MANIFEST_TOOL_OUTPUT",
+    "signature": "REPLACE_WITH_WARPCAST_MANIFEST_TOOL_OUTPUT"
+  },
+  "miniapp": {
+    "version": "1",
+    "name": "Baccarat",
+    "subtitle": "Single-player baccarat on Base",
+    "description": "Play baccarat and record your score on-chain. Single-player card game built on Base.",
+    "homeUrl": "https://your-app.vercel.app",
+    "iconUrl": "https://your-app.vercel.app/icon.png",
+    "splashImageUrl": "https://your-app.vercel.app/splash.png",
+    "splashBackgroundColor": "#ece8de",
+    "heroImageUrl": "https://your-app.vercel.app/og-image.png",
+    "ogTitle": "Baccarat",
+    "ogDescription": "Single-player baccarat on Base",
+    "ogImageUrl": "https://your-app.vercel.app/og-image.png",
+    "screenshotUrls": [
+      "https://your-app.vercel.app/screenshot1.png",
+      "https://your-app.vercel.app/screenshot2.png",
+      "https://your-app.vercel.app/screenshot3.png"
+    ],
+    "primaryCategory": "games",
+    "tags": ["baccarat", "casino", "base", "onchain", "game"],
+    "tagline": "Baccarat on Base",
+    "noindex": false,
+    "requiredChains": ["eip155:8453"],
+    "requiredCapabilities": []
+  }
+}
